@@ -1,0 +1,124 @@
+# ============================================
+# 自愈规则配置
+# ============================================
+# 每条规则定义：触发条件 + 执行操作 + 确认级别
+# confirm_required: true 表示高风险操作，需要人工确认
+# ============================================
+
+heal_rules:
+  - name: "restart_nginx"
+    condition: "nginx_status == 'stopped' or nginx_error_rate > 0.1"
+    actions:
+      - tool: "service_control"
+        params:
+          service_name: "nginx"
+          action: "restart"
+        confirm_required: false
+    description: "Nginx 停止或错误率过高时自动重启"
+
+  - name: "restart_application"
+    condition: "app_process_not_running == true"
+    actions:
+      - tool: "service_control"
+        params:
+          service_name: "application"
+          action: "restart"
+        confirm_required: false
+    description: "应用进程不存在时自动重启"
+
+  - name: "clean_journal_logs"
+    condition: "disk_usage_percent > 85"
+    actions:
+      - tool: "ssh_execute"
+        params:
+          command: "sudo journalctl --vacuum-time=3d"
+        confirm_required: false
+    description: "磁盘使用率超过85%时清理系统日志"
+
+  - name: "clean_apt_cache"
+    condition: "disk_usage_percent > 90"
+    actions:
+      - tool: "ssh_execute"
+        params:
+          command: "sudo apt-get clean && sudo apt-get autoremove -y"
+        confirm_required: true
+    description: "磁盘使用率超过90%时清理包管理器缓存（需确认）"
+
+  - name: "clean_old_logs"
+    condition: "disk_usage_percent > 90"
+    actions:
+      - tool: "ssh_execute"
+        params:
+          command: "sudo find /var/log -name '*.gz' -mtime +7 -delete && sudo find /var/log -name '*.old' -mtime +7 -delete"
+        confirm_required: true
+    description: "磁盘使用率超过90%时清理7天前的压缩日志（需确认）"
+
+  - name: "kill_long_queries"
+    condition: "mysql_long_query_count > 10"
+    actions:
+      - tool: "db_execute"
+        params:
+          db_type: "mysql"
+          query: "SELECT id FROM information_schema.processlist WHERE TIME > 600"
+          action: "kill"
+        confirm_required: true
+    description: "MySQL 长查询超过10分钟且数量大于10时终止（需确认）"
+
+  - name: "flush_redis"
+    condition: "redis_used_memory_percent > 95"
+    actions:
+      - tool: "ssh_execute"
+        params:
+          command: "redis-cli -a ${REDIS_PASSWORD} CONFIG SET maxmemory-policy allkeys-lru"
+        confirm_required: true
+    description: "Redis 内存使用超过95%时调整淘汰策略（需确认）"
+
+  # ============================================
+  # Windows 自愈规则
+  # ============================================
+  - name: "restart_windows_service"
+    condition: "windows_service_status == 'stopped' and service_auto_start == true"
+    actions:
+      - tool: "service_control"
+        params:
+          service_name: "<service_name>"
+          action: "restart"
+          os_type: "windows"
+        confirm_required: false
+    description: "Windows 自动启动服务停止时自动重启"
+
+  - name: "clean_windows_temp"
+    condition: "windows_disk_usage_percent > 90"
+    actions:
+      - tool: "ssh_execute"
+        params:
+          command: "powershell -Command \"Remove-Item -Path 'C:\\Windows\\Temp\\*' -Recurse -Force -ErrorAction SilentlyContinue; Remove-Item -Path '$env:TEMP\\*' -Recurse -Force -ErrorAction SilentlyContinue\""
+        confirm_required: false
+    description: "Windows 磁盘使用率超过90%时清理临时文件"
+
+  - name: "clean_windows_event_log"
+    condition: "windows_disk_usage_percent > 95"
+    actions:
+      - tool: "ssh_execute"
+        params:
+          command: "powershell -Command \"wevtutil el | ForEach-Object {wevtutil cl $_}\""
+        confirm_required: true
+    description: "Windows 磁盘使用率超过95%时清理事件日志（需确认）"
+
+  - name: "restart_iis"
+    condition: "iis_app_pool_status == 'stopped' or iis_error_rate > 0.1"
+    actions:
+      - tool: "ssh_execute"
+        params:
+          command: "powershell -Command \"Restart-Service W3SVC; Restart-Service WAS\""
+        confirm_required: false
+    description: "IIS 应用池停止或错误率过高时重启 IIS 服务"
+
+  - name: "clean_windows_update_cache"
+    condition: "windows_disk_usage_percent > 90"
+    actions:
+      - tool: "ssh_execute"
+        params:
+          command: "powershell -Command \"Stop-Service wuauserv; Remove-Item -Path 'C:\\Windows\\SoftwareDistribution\\Download\\*' -Recurse -Force -ErrorAction SilentlyContinue; Start-Service wuauserv\""
+        confirm_required: true
+    description: "Windows 磁盘使用率超过90%时清理 Windows Update 缓存（需确认）"

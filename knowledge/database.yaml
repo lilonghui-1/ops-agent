@@ -1,0 +1,310 @@
+# ============================================
+# 数据库运维知识条目
+# ============================================
+
+entries:
+  # MySQL 相关
+  - category: database
+    symptom: MySQL 连接数接近上限
+    possible_causes:
+      - 应用连接泄漏（未正确释放连接）
+      - 连接池配置过大
+      - 慢查询阻塞连接
+      - 突发流量增加
+    diagnosis_steps:
+      - SHOW STATUS LIKE 'Threads_connected' 查看当前连接数
+      - SHOW VARIABLES LIKE 'max_connections' 查看最大连接数
+      - SHOW PROCESSLIST 查看当前连接状态
+      - 检查应用连接池配置
+    solutions:
+      - 增加 max_connections
+      - 优化应用连接池配置
+      - 终止长时间空闲连接
+      - 优化慢查询释放连接
+      - 使用连接池中间件（ProxySQL）
+    severity: high
+
+  - category: database
+    symptom: MySQL 慢查询数量激增
+    possible_causes:
+      - 缺少索引
+      - 查询条件变化导致索引失效
+      - 数据量增长导致全表扫描
+      - 锁等待
+    diagnosis_steps:
+      - SHOW STATUS LIKE 'Slow_queries' 查看慢查询总数
+      - 查看慢查询日志: /var/log/mysql/slow.log
+      - EXPLAIN 分析慢查询执行计划
+      - SHOW INDEX FROM table_name 检查索引
+    solutions:
+      - 为查询添加合适的索引
+      - 优化 SQL 语句，避免全表扫描
+      - 使用查询缓存
+      - 分库分表
+      - 读写分离
+    severity: medium
+
+  - category: database
+    symptom: MySQL 主从复制延迟
+    possible_causes:
+      - 从库硬件性能不足
+      - 大事务（批量插入/更新）
+      - 从库上有大量读查询竞争 IO
+      - 网络延迟
+      - 主从版本不一致
+    diagnosis_steps:
+      - SHOW SLAVE STATUS 查看复制状态
+      - 检查 Seconds_Behind_Master
+      - 检查主从网络延迟
+      - 检查从库 IO 和 CPU 使用率
+    solutions:
+      - 优化大事务，拆分为小事务
+      - 升级从库硬件
+      - 使用并行复制
+      - 减少从库读查询
+      - 检查网络链路
+    severity: high
+
+  - category: database
+    symptom: MySQL 服务无法启动
+    possible_causes:
+      - 配置文件错误
+      - 数据文件损坏
+      - 端口被占用
+      - 磁盘空间不足
+      - 权限问题
+    diagnosis_steps:
+      - 查看错误日志: /var/log/mysql/error.log
+      - 检查配置文件: mysqld --validate-config
+      - 检查端口: ss -tlnp | grep 3306
+      - 检查磁盘空间: df -h
+      - 检查数据目录权限: ls -la /var/lib/mysql/
+    solutions:
+      - 修复配置文件错误
+      - 使用 mysqldump 恢复数据
+      - 释放磁盘空间
+      - 修复文件权限
+      - 杀死占用端口的进程
+    severity: critical
+
+  # PostgreSQL 相关
+  - category: database
+    symptom: PostgreSQL 活跃连接数过多
+    possible_causes:
+      - 连接泄漏
+      - 连接池配置不当
+      - 长事务未提交
+      - 应用并发量增加
+    diagnosis_steps:
+      - SELECT count(*) FROM pg_stat_activity 查看连接数
+      - SELECT state, count(*) FROM pg_stat_activity GROUP BY state 按状态统计
+      - SELECT * FROM pg_stat_activity WHERE state = 'active' AND now() - query_start > interval '5 minutes' 查看长事务
+    solutions:
+      - 增加 max_connections
+      - 终止空闲连接: SELECT pg_terminate_backend(pid)
+      - 使用 PgBouncer 连接池
+      - 优化应用连接管理
+    severity: high
+
+  # Redis 相关
+  - category: database
+    symptom: Redis 内存使用率过高
+    possible_causes:
+      - 缓存数据量增长
+      - 未设置过期时间
+      - 大 Key 占用过多内存
+      - 内存碎片
+    diagnosis_steps:
+      - redis-cli INFO memory 查看内存信息
+      - redis-cli --bigkeys 查找大 Key
+      - redis-cli MEMORY DOCTOR 获取内存诊断建议
+    solutions:
+      - 为 Key 设置合理的过期时间
+      - 使用内存淘汰策略: CONFIG SET maxmemory-policy allkeys-lru
+      - 拆分大 Key
+      - 增加 Redis 内存限制
+      - 使用 Redis Cluster 分片
+    severity: high
+
+  - category: database
+    symptom: Redis 响应延迟增加
+    possible_causes:
+      - 慢查询（大 Key 操作）
+      - 内存不足导致使用 swap
+      - 网络延迟
+      - Redis 主线程阻塞
+      - 持久化（RDB/AOF）阻塞
+    diagnosis_steps:
+      - redis-cli --latency 测量延迟
+      - redis-cli SLOWLOG GET 10 查看慢查询日志
+      - redis-cli INFO persistence 查看持久化状态
+      - 检查服务器是否使用 swap: free -h
+    solutions:
+      - 优化大 Key 操作
+      - 禁用 swap: swapoff -a
+      - 使用持久化的后台子进程
+      - 增加 Redis 实例
+      - 使用管道（pipeline）批量操作
+    severity: medium
+
+  # Oracle 相关
+  - category: database
+    symptom: Oracle 表空间使用率过高
+    possible_causes:
+      - 数据量持续增长
+      - 未清理归档日志
+      - 临时表空间膨胀
+      - UNDO 表空间未回收
+    diagnosis_steps:
+      - 查询 DBA_TABLESPACE_USAGE_METRICS 查看表空间使用率
+      - 查询 V$ARCHIVED_LOG 检查归档日志数量
+      - 查询 DBA_SEGMENTS 查看大对象
+      - 检查自动扩展设置
+    solutions:
+      - 增加表空间大小或启用自动扩展
+      - 清理过期归档日志（RMAN DELETE ARCHIVELOG）
+      - 重建临时表空间
+      - 调整 UNDO_RETENTION 参数
+      - 归档日志定期备份并删除
+    severity: high
+
+  - category: database
+    symptom: Oracle 活跃会话数过多
+    possible_causes:
+      - 应用连接池配置过大
+      - 存在阻塞会话
+      - SQL 执行效率低导致会话长时间占用
+      - 连接泄漏
+    diagnosis_steps:
+      - SELECT COUNT(*) FROM V$SESSION WHERE TYPE='USER' 查看用户会话数
+      - 查询 V$LOCK 查看锁等待情况
+      - 查询 V$SQLAREA 查看执行时间长的 SQL
+      - 检查应用连接池配置
+    solutions:
+      - 优化应用连接池大小
+      - 终止阻塞会话（ALTER SYSTEM KILL SESSION）
+      - 优化慢 SQL，添加索引
+      - 检查应用代码是否存在连接未释放
+      - 考虑使用连接池中间件
+    severity: high
+
+  - category: database
+    symptom: Oracle 等待事件异常
+    possible_causes:
+      - IO 性能瓶颈（db file sequential read 等待高）
+      - 锁竞争（enqueue 等待高）
+      - 日志写入瓶颈（log file sync 等待高）
+      - CPU 资源不足
+    diagnosis_steps:
+      - 查询 V$SYSTEM_EVENT 查看 TOP 等待事件
+      - 查询 V$SQL 查看高消耗 SQL
+      - 检查磁盘 IO 性能（iostat/vmstat）
+      - 检查 redo log 切换频率
+    solutions:
+      - 优化 SQL，减少全表扫描
+      - 增加索引减少随机读
+      - 增加 redo log 组大小
+      - 使用 ASM 或 SSD 提升 IO 性能
+      - 考虑分区表减少扫描范围
+    severity: medium
+
+  # 达梦数据库相关
+  - category: database
+    symptom: 达梦数据库连接数达到上限
+    possible_causes:
+      - 应用并发连接过多
+      - 连接未正确释放
+      - MAX_SESSIONS 参数设置过小
+      - 存在长时间未提交的事务
+    diagnosis_steps:
+      - SELECT COUNT(*) FROM V$SESSIONS 查看当前会话数
+      - SELECT PARA_VALUE FROM V$DM_INI WHERE PARA_NAME='MAX_SESSIONS' 查看最大连接数
+      - 查询 V$SESSIONS 查看活跃会话状态
+      - 检查应用连接池配置
+    solutions:
+      - 调整 MAX_SESSIONS 参数
+      - 优化应用连接池配置
+      - 终止空闲会话
+      - 检查并修复连接泄漏
+      - 使用连接池中间件
+    severity: high
+
+  - category: database
+    symptom: 达梦数据库表空间不足
+    possible_causes:
+      - 数据文件未设置自动扩展
+      - 数据量快速增长
+      - 临时表空间使用过大
+      - 日志文件占用空间过多
+    diagnosis_steps:
+      - SELECT * FROM V$TABLESPACE 查看表空间使用情况
+      - 检查数据文件自动扩展设置
+      - 查询大表占用空间
+      - 检查日志文件大小和数量
+    solutions:
+      - 为数据文件启用自动扩展
+      - 增加新的数据文件
+      - 清理过期日志
+      - 归档历史数据
+      - 定期执行统计信息收集
+    severity: high
+
+  - category: database
+    symptom: 达梦数据库 SQL 执行缓慢
+    possible_causes:
+      - 缺少索引或索引失效
+      - 统计信息过期
+      - 大表全表扫描
+      - 锁等待
+    diagnosis_steps:
+      - 查询 V$SQL_HISTORY 查看慢 SQL
+      - 使用 EXPLAIN 分析执行计划
+      - 检查索引状态
+      - 查询 V$LOCK 查看锁等待
+    solutions:
+      - 为慢 SQL 添加合适索引
+      - 更新统计信息（DBMS_STATS.GATHER_TABLE_STATS）
+      - 优化 SQL 语句
+      - 终止阻塞会话
+      - 考虑分区表
+    severity: medium
+
+  # 人大金仓相关
+  - category: database
+    symptom: 人大金仓数据库连接数过多
+    possible_causes:
+      - 应用连接池配置不当
+      - 长事务未提交
+      - 连接泄漏
+      - max_connections 设置过小
+    diagnosis_steps:
+      - SELECT count(*) FROM sys_stat_activity 查看连接数
+      - SELECT state, count(*) FROM sys_stat_activity GROUP BY state 按状态统计
+      - 查看长事务
+      - 检查应用连接池配置
+    solutions:
+      - 调整 max_connections
+      - 终止空闲连接（sys_terminate_backend）
+      - 优化应用连接管理
+      - 使用连接池中间件
+    severity: high
+
+  - category: database
+    symptom: 人大金仓数据库性能下降
+    possible_causes:
+      - 统计信息过期
+      - 索引缺失或失效
+      - 大表全表扫描
+      - WAL 日志写入瓶颈
+    diagnosis_steps:
+      - 查询 sys_stat_user_tables 查看表扫描情况
+      - 使用 EXPLAIN 分析慢查询
+      - 检查索引使用情况
+      - 监控 WAL 写入性能
+    solutions:
+      - 执行 ANALYZE 更新统计信息
+      - 添加或重建索引
+      - 优化 SQL 避免全表扫描
+      - 调整 checkpoint 参数
+      - 考虑分区表
+    severity: medium

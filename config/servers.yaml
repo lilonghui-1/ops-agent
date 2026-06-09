@@ -1,0 +1,116 @@
+# ============================================
+# 服务器和数据库配置
+# ============================================
+
+servers:
+  # 示例：Web 服务器
+  - name: "web-server-01"
+    host: "192.168.1.10"
+    port: 22
+    username: "ops"
+    private_key_path: "${SSH_PRIVATE_KEY_PATH}"
+    tags: ["web", "production"]
+    databases:
+      - type: "mysql"
+        host: "127.0.0.1"
+        port: 3306
+        username: "monitor"
+        password: "${MYSQL_PASSWORD}"
+        name: "app_db"
+      - type: "redis"
+        host: "127.0.0.1"
+        port: 6379
+        password: "${REDIS_PASSWORD}"
+
+  # 示例：数据库服务器
+  - name: "db-server-01"
+    host: "192.168.1.20"
+    port: 22
+    username: "ops"
+    private_key_path: "${SSH_PRIVATE_KEY_PATH}"
+    tags: ["database", "production"]
+    databases:
+      - type: "mysql"
+        host: "127.0.0.1"
+        port: 3306
+        username: "monitor"
+        password: "${MYSQL_PASSWORD}"
+        name: "app_db"
+      - type: "postgresql"
+        host: "127.0.0.1"
+        port: 5432
+        username: "monitor"
+        password: "${PG_PASSWORD}"
+        name: "analytics_db"
+
+  # 示例：Oracle 数据库服务器
+  - name: "oracle-server-01"
+    host: "192.168.1.21"
+    port: 22
+    username: "ops"
+    private_key_path: "${SSH_PRIVATE_KEY_PATH}"
+    tags: ["database", "oracle", "production"]
+    databases:
+      - type: "oracle"
+        host: "192.168.1.21"
+        port: 1521
+        username: "system"
+        password: "${ORACLE_PASSWORD}"
+        name: "ORCL"
+        service_name: "ORCL"      # Oracle Service Name（优先使用）
+        # sid: "ORCL"             # 或 Oracle SID（二选一）
+
+  # 示例：达梦数据库服务器
+  - name: "dm-server-01"
+    host: "192.168.1.22"
+    port: 22
+    username: "ops"
+    private_key_path: "${SSH_PRIVATE_KEY_PATH}"
+    tags: ["database", "dm", "production"]
+    databases:
+      - type: "dm"
+        host: "192.168.1.22"
+        port: 5236
+        username: "SYSDBA"
+        password: "${DM_PASSWORD}"
+        name: "DAMENG"
+
+  # 示例：人大金仓数据库服务器
+  - name: "kingbase-server-01"
+    host: "192.168.1.23"
+    port: 22
+    username: "ops"
+    private_key_path: "${SSH_PRIVATE_KEY_PATH}"
+    tags: ["database", "kingbase", "production"]
+    databases:
+      - type: "kingbase"
+        host: "192.168.1.23"
+        port: 54321
+        username: "system"
+        password: "${KINGBASE_PASSWORD}"
+        name: "test"
+
+  # 示例：Windows 应用服务器
+  - name: "win-app-server-01"
+    host: "192.168.1.30"
+    port: 22
+    username: "administrator"
+    password: "${WIN_SERVER_PASSWORD}"
+    os_type: "windows"
+    tags: ["windows", "application", "production"]
+    databases:
+      - type: "mysql"
+        host: "127.0.0.1"
+        port: 3306
+        username: "monitor"
+        password: "${MYSQL_PASSWORD}"
+        name: "app_db"
+
+  # 示例：Windows IIS 服务器
+  - name: "win-iis-server-01"
+    host: "192.168.1.31"
+    port: 22
+    username: "administrator"
+    password: "${WIN_SERVER_PASSWORD}"
+    os_type: "windows"
+    tags: ["windows", "web", "production"]

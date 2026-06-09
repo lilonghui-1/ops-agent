@@ -1,0 +1,65 @@
+# ============================================
+# 运维 Agent 主配置文件
+# ============================================
+
+llm:
+  provider: "openai"
+  api_key: "${OPENAI_API_KEY}"
+  base_url: "${OPENAI_BASE_URL}"    # 可选，本地模型时设置（如 http://localhost:8000/v1）
+  model: "gpt-4"
+  temperature: 0.1
+  max_tokens: 4096
+
+# 通知渠道配置
+notify:
+  wecom_webhook: "${WECOM_WEBHOOK}"       # 企业微信机器人 Webhook
+  dingtalk_webhook: "${DINGTALK_WEBHOOK}"  # 钉钉机器人 Webhook
+
+# 日志级别: DEBUG / INFO / WARNING / ERROR
+log_level: "INFO"
+
+# 数据库驱动版本管理
+# 部署前请确保安装对应的数据库客户端和 Python 驱动
+db_drivers:
+  oracle:
+    package: "cx_Oracle"
+    min_version: "8.3.0"
+    client_required: true
+    client_note: "需要安装 Oracle Instant Client (Basic 或 Basic Light)"
+    install_cmd: "pip install cx_Oracle>=8.3.0"
+  dm:
+    package: "dmPython"
+    min_version: "2.4.0"
+    client_required: true
+    client_note: "需要安装达梦数据库客户端，并设置 DM_HOME 环境变量"
+    install_cmd: "pip install dmPython>=2.4.0  # 需从达梦官网下载 whl 包"
+  kingbase:
+    package: "ksycopg2"
+    min_version: "2.8.0"
+    client_required: false
+    client_note: "纯 Python 驱动，无需额外客户端"
+    install_cmd: "pip install ksycopg2>=2.8.0"
+
+# 日志平台配置（可选）
+# 支持通过 API 查询 ELK/Loki 等日志平台
+log_platforms:
+  # Elasticsearch 示例
+  - name: "elasticsearch"
+    type: "elasticsearch"
+    url: "${ES_URL}"              # 如: http://elasticsearch:9200
+    index: "logs-*"               # 日志索引模式
+    username: "${ES_USERNAME}"    # 可选
+    password: "${ES_PASSWORD}"    # 可选
+  # Grafana Loki 示例
+  - name: "loki"
+    type: "loki"
+    url: "${LOKI_URL}"            # 如: http://loki:3100
+
+# 定时任务配置
+schedule:
+  inspection:
+    cron: "0 */6 * * *"       # 每6小时巡检一次
+    enabled: false             # 默认关闭，按需开启
+  log_analysis:
+    cron: "0 */2 * * *"       # 每2小时分析日志
+    enabled: false
