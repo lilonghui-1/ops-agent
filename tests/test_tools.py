@@ -196,7 +196,7 @@ class TestDBToolsExtended:
         from src.tools.db_tools import DB_DRIVERS, DB_DEFAULT_PORTS, DRIVER_VERSION_REQUIREMENTS
 
         # 验证驱动映射
-        assert DB_DRIVERS['oracle'] == 'oracle+cx_oracle'
+        assert DB_DRIVERS['oracle'] == 'oracle+oracledb'
         assert DB_DRIVERS['dm'] == 'dm+dmPython'
         assert DB_DRIVERS['kingbase'] == 'postgresql+ksycopg2'
 
@@ -206,7 +206,7 @@ class TestDBToolsExtended:
         assert DB_DEFAULT_PORTS['kingbase'] == 54321
 
         # 验证版本要求
-        assert DRIVER_VERSION_REQUIREMENTS['oracle']['min_version'] == '8.3.0'
+        assert DRIVER_VERSION_REQUIREMENTS['oracle']['min_version'] == '2.0.0'
         assert DRIVER_VERSION_REQUIREMENTS['dm']['min_version'] == '2.4.0'
         assert DRIVER_VERSION_REQUIREMENTS['kingbase']['min_version'] == '2.8.0'
 
@@ -217,7 +217,7 @@ class TestDBToolsExtended:
         tool = DBQueryTool(config=None)
         creds = {'username': 'system', 'password': 'pass123', 'service_name': 'ORCL', 'sid': ''}
         url = tool._build_connection_url('oracle', '192.168.1.21', 1521, 'ORCL', creds)
-        assert 'oracle+cx_oracle://system:pass123@192.168.1.21:1521/?service_name=ORCL' == url
+        assert 'oracle+oracledb://system:pass123@192.168.1.21:1521/?service_name=ORCL' == url
 
     def test_build_oracle_connection_url_sid(self):
         """测试 Oracle SID 连接 URL 构建"""
@@ -226,7 +226,7 @@ class TestDBToolsExtended:
         tool = DBQueryTool(config=None)
         creds = {'username': 'system', 'password': 'pass123', 'service_name': '', 'sid': 'ORCL'}
         url = tool._build_connection_url('oracle', '192.168.1.21', 1521, 'ORCL', creds)
-        assert 'oracle+cx_oracle://system:pass123@192.168.1.21:1521/ORCL' == url
+        assert 'oracle+oracledb://system:pass123@192.168.1.21:1521/ORCL' == url
 
     def test_build_dm_connection_url(self):
         """测试达梦数据库连接 URL 构建"""

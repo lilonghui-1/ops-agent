@@ -22,11 +22,11 @@ log_level: "INFO"
 # 部署前请确保安装对应的数据库客户端和 Python 驱动
 db_drivers:
   oracle:
-    package: "cx_Oracle"
-    min_version: "8.3.0"
-    client_required: true
-    client_note: "需要安装 Oracle Instant Client (Basic 或 Basic Light)"
-    install_cmd: "pip install cx_Oracle>=8.3.0"
+    package: "oracledb"
+    min_version: "2.0.0"
+    client_required: false
+    client_note: "纯 Python 驱动，Thin 模式无需安装 Oracle Instant Client"
+    install_cmd: "pip install oracledb>=2.0.0"
   dm:
     package: "dmPython"
     min_version: "2.4.0"

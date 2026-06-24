@@ -14,7 +14,7 @@ psycopg2-binary>=2.9.0
 redis>=5.0.0
 
 # 国产数据库驱动（按需安装）
-# cx_Oracle>=8.3.0          # Oracle 驱动，需先安装 Oracle Instant Client
+# oracledb>=2.0.0           # Oracle 驱动，纯 Python 实现，Thin 模式无需 Oracle Client
 # dmPython>=2.4.0           # 达梦数据库驱动，需从达梦官网下载
 # ksycopg2>=2.8.0           # 人大金仓驱动
 
