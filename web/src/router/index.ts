@@ -70,6 +70,24 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'AI 运维对话' },
       },
       {
+        path: 'local-configs',
+        name: 'LocalConfigs',
+        component: () => import('@/views/LocalConfigView.vue'),
+        meta: { title: '本地配置管理' },
+      },
+      {
+        path: 'parameters',
+        name: 'Parameters',
+        component: () => import('@/views/ParameterView.vue'),
+        meta: { title: '参数管理' },
+      },
+      {
+        path: 'alerts',
+        name: 'Alerts',
+        component: () => import('@/views/AlertView.vue'),
+        meta: { title: '告警管理' },
+      },
+      {
         path: 'audit',
         name: 'Audit',
         component: () => import('@/views/AuditView.vue'),

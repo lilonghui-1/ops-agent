@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Delete, Document, Plus, Refresh, Tickets } from '@element-plus/icons-vue'
+import { Document, Plus, Refresh, Tickets } from '@element-plus/icons-vue'
 import { Codemirror } from 'vue-codemirror'
 import { yaml } from '@codemirror/lang-yaml'
 import { json } from '@codemirror/lang-json'
@@ -21,12 +21,6 @@ interface ConfigFile {
   category?: string
   is_custom?: boolean
   [key: string]: unknown
-}
-
-interface CategoryInfo {
-  category: string
-  label: string
-  count: number
 }
 
 interface HistoryItem {
@@ -131,7 +125,7 @@ const expandedCategories = ref<string[]>(['server', 'database', 'llm', 'applicat
 
 async function loadServers() {
   try {
-    const res = await request.get<ServerItem[] | { items?: ServerItem[] }>('/servers/')
+    const res = await request.get<ServerItem[] | { items?: ServerItem[] }>('/servers')
     const raw = res.data
     servers.value = Array.isArray(raw)
       ? raw
